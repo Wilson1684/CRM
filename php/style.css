@@ -1,0 +1,15 @@
+.hero {
+  background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), 
+              url('https://via.placeholder.com/1920x600') center/cover no-repeat;
+  color: white;
+  padding: 100px 0;
+  text-align: center;
+}
+.feature-card {
+  margin: 15px 0;
+}
+footer {
+  background-color: #555;
+  color: white;
+  padding: 20px 0;
+}
