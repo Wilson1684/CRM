@@ -22,7 +22,7 @@ async function registerAdmin(req, res) {
       if (error) {
         return res.status(500).json({ status: 500, message: "Internal Server Error" });
       }
-      
+
       if (rows.length > 0) {
         return res.status(400).json({ status: 400, message: "Admin with this email already exists" });
       }
@@ -35,7 +35,7 @@ async function registerAdmin(req, res) {
 
       // Insert admin data into the admin table
       const insertAdminQuery = `
-        INSERT INTO admin (email, admin_password, token) 
+        INSERT INTO admin (email, admin_password, token)
         VALUES ( "${email}", "${hashedPassword}", "${token}")
       `;
 
@@ -86,15 +86,23 @@ function login(req, res) {
     if (error) {
       return res.status(500).json({ status: 500, message: "Internal Server Error" });
     }
-    
+
     if (rows.length === 0) {
       return res.status(401).json({ status: 401, message: "Invalid email or password" });
     }
 
     // Compare the provided password with the hashed password in the database
     const hashedPassword = rows[0].password || rows[0].admin_password;
-    const isMatch = await bcrypt.compare(password, hashedPassword);
-    
+    let isMatch = false;
+
+    if (hashedPassword && (hashedPassword.startsWith('$2a$') || hashedPassword.startsWith('$2b$'))) {
+      isMatch = await bcrypt.compare(password, hashedPassword);
+    }
+
+    else {
+      isMatch = (password === hashedPassword);
+    }
+
     if (!isMatch) {
       return res.status(401).json({ status: 401, message: "Invalid email or password" });
     }
@@ -126,7 +134,7 @@ function login(req, res) {
     });
   });
 }
- 
+
 
 function changePassword(req, res) {
   const { userId, type } = req.user;
