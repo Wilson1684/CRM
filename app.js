@@ -32,8 +32,8 @@ app.use("/dashboarddatabase", dashboardRoute);
 app.use(express.static("public"));
 
 // Provide the required configuration
-const CREDENTIALS = JSON.parse(process.env.CREDENTIALS);
-const calendarId = process.env.CALENDAR_ID;
+const CREDENTIALS = serviceAccount;
+const calendarId = process.env.CALENDAR_ID || 'primary';
 
 // Google calendar API settings
 const SCOPES = 'https://www.googleapis.com/auth/calendar';
@@ -59,11 +59,11 @@ const insertEvent = async (event, orderId) => {
           const eventId = response.data.id;
           console.log(eventId);
 
-          
-          
+
+
            // Insert eventId into the database
            const query = `UPDATE ordertable SET event_id = '${eventId}' WHERE order_id = ${orderId}`;
-           
+
 
            db.query(query, (err, results) => {
                if (err) {
@@ -79,7 +79,7 @@ const insertEvent = async (event, orderId) => {
       }
   } catch (error) {
       console.log(`Error at insertEvent --> ${error}`);
-      return 0; 
+      return 0;
   }
 };
 
@@ -122,7 +122,7 @@ app.post('/submit-eta', async (req, res) => {
       }
   };
 
-  
+
   console.log('URL: ', orderId);
   const result = await insertEvent(event, orderId);
 
