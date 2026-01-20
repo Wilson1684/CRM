@@ -1,4 +1,4 @@
-const baseUrl = "http://68.183.182.216:5005";
+const baseUrl = "http://152.42.199.126:5005";
 
 document.addEventListener("DOMContentLoaded", function () {
   document
