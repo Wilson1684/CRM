@@ -2,35 +2,72 @@ const db = require("../utils/database");
 const bcrypt = require('bcryptjs');
 
 function customerRegister(req, res) {
-  const { email, password, name, phone_number, location, auto_gate_brand, alarm_brand, auto_gate_warranty, alarm_warranty } = req.body;
+  let { email, password, name, phone_number, location, auto_gate_brand, alarm_brand, auto_gate_warranty, alarm_warranty } = req.body;
 
-  // Check if email already exists
-  const isUserExistQuery = `SELECT * FROM customer WHERE email='${email}'`;
+  phone_number = (phone_number === 'undefined' || phone_number === '' || !phone_number) ? null : phone_number;
+  location = (location === 'undefined' || location === '' || !location) ? null : location;
+  auto_gate_brand = (auto_gate_brand === 'undefined' || auto_gate_brand === '' || !auto_gate_brand) ? null : auto_gate_brand;
+  alarm_brand = (alarm_brand === 'undefined' || alarm_brand === '' || !alarm_brand) ? null : alarm_brand;
+  auto_gate_warranty = (auto_gate_warranty === 'undefined' || auto_gate_warranty === '' || !auto_gate_warranty) ? null : auto_gate_warranty;
+  alarm_warranty = (alarm_warranty === 'undefined' || alarm_warranty === '' || !alarm_warranty) ? null : alarm_warranty;
 
-  db.query(isUserExistQuery, async (error, rows) => {
+  if (!email || !password || !name) {
+    return res.status(400).json({
+      status: 400,
+      message: "Email, password, and name are required"
+    });
+  }
+
+  const isUserExistQuery = 'SELECT * FROM customer WHERE email = ?';
+
+  db.query(isUserExistQuery, [email], async (error, rows) => {
     if (error) {
+      console.error("Database query error:", error);
       return res.status(500).json({ status: 500, message: "Internal Server Error" });
     }
 
-    // If email already exists
+    
     if (rows.length > 0) {
       return res.status(400).json({ status: 400, message: "Email already exists" });
     }
 
     try {
-      // Hash the password using bcryptjs
+      
       const hashedPassword = await bcrypt.hash(password, 10); // Salt rounds = 10
 
-      // Insert the new user into the database with the hashed password using string interpolation
-      const createUserQuery = `INSERT INTO customer (email, password, name, phone_number, location, auto_gate_brand, alarm_brand, auto_gate_warranty, alarm_warranty) 
-                               VALUES ('${email}', '${hashedPassword}', '${name}', '${phone_number}', '${location}', '${auto_gate_brand}', '${alarm_brand}', '${auto_gate_warranty}', '${alarm_warranty}')`;
+      const createUserQuery = `
+        INSERT INTO customer
+        (email, password, name, phone_number, location, auto_gate_brand, alarm_brand, auto_gate_warranty, alarm_warranty)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `;
 
-      db.query(createUserQuery, (error, rows) => {
+      const values = [
+        email,
+        hashedPassword,
+        name,
+        phone_number,
+        location,
+        auto_gate_brand,
+        alarm_brand,
+        auto_gate_warranty,
+        alarm_warranty
+      ];
+
+      db.query(createUserQuery, values, (error, result) => {
         if (error) {
-          return res.status(500).json({ status: 500, message: "Internal Server Error" });
+          console.error("Database insert error:", error);
+          console.error("SQL Message:", error.sqlMessage);
+          return res.status(500).json({
+            status: 500,
+            message: "Internal Server Error"
+          });
         }
 
-        return res.status(201).json({ status: 201, message: "User created successfully" });
+        return res.status(201).json({
+          status: 201,
+          message: "User created successfully",
+          data: { customerId: result.insertId }
+        });
       });
 
     } catch (err) {
@@ -107,7 +144,7 @@ function getCustomer(req, res) {
   const customerId = req.params.id;
 
   const dbQuery = `
-    SELECT 
+    SELECT
       c.customer_id,
       c.name AS customer_name,
       c.location AS customer_address,
@@ -117,9 +154,9 @@ function getCustomer(req, res) {
       c.alarm_brand AS customer_alarm_brand,
       c.auto_gate_warranty as customer_auto_gate_warranty,
       c.alarm_warranty as customer_alarm_warranty
-    FROM 
+    FROM
       customer c
-    WHERE 
+    WHERE
       c.customer_id = ${customerId}
   `;
 
@@ -245,7 +282,7 @@ function getCustomerByToken(req, res) {
 }
 
 function updateFCMToken(req, res){
-  
+
   const { customerId, fcmToken } =
     req.body;
   // Update the database with the generated token
@@ -269,7 +306,7 @@ function updateFCMToken(req, res){
 
 function getWarrantyDetails(req, res) {
   const getWarrantyQuery = `
-    SELECT 
+    SELECT
       customer_id,
       name,
       auto_gate_brand,
