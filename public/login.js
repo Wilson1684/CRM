@@ -23,7 +23,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // Convert object to JSON string
     const jsonData = JSON.stringify(loginData);
 
-    fetch("http://68.183.182.216:5005/dashboarddatabase/login", {
+    fetch("http://152.42.199.126:5005/dashboarddatabase/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json", // Set the Content-Type header
